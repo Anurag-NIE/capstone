@@ -1,0 +1,240 @@
+=========================================================
+LOADLOCK CAPSTONE PROJECT - VISUAL STUDIO SETUP GUIDE
+=========================================================
+
+PROJECT OVERVIEW
+-----------------
+This is an Applied Materials capstone project implementing a LoadLock control system with:
+- 2 Atmospheric Robots (Robot 1 has 2 arms, Robot 2 has 1 arm)
+- 1 LoadLock chamber
+- 1 Vacuum Robot
+- TCP/IP based IPC between processes
+- Hardware IO abstraction layer (DLL)
+- Recipe-based wafer processing
+
+
+SYSTEM ARCHITECTURE
+-------------------
+1. ATMController.exe - Atmospheric Robot Process (TCP Client)
+   - Controls 3 robot arms
+   - Generates wafers randomly (0-10 second intervals)
+   - Schedules wafer placement to LoadLock
+   - Communicates with LLVacController via TCP
+
+2. LLVacController.exe - LoadLock & Vacuum Robot Process (TCP Server)
+   - Manages LoadLock chamber state
+   - Executes recipes on wafers
+   - Controls Vacuum Robot for wafer pickup
+   - Dynamically loads HardwareIO.dll
+
+3. HardwareIO.dll - IO Abstraction Layer
+   - Provides GetDI() and SetDO() APIs
+   - Debug build: Simulates hardware
+   - Release build: Calls actual hardware APIs
+
+
+VISUAL STUDIO SOLUTION STRUCTURE
+---------------------------------
+You should have these projects in your solution:
+
+1. HardwareIO (Dynamic-Link Library)
+2. LLVacController (Console Application)
+3. ATMController (Console Application)
+
+
+MANUAL SETUP INSTRUCTIONS FOR VISUAL STUDIO
+--------------------------------------------
+
+STEP 1: CREATE SOLUTION
+------------------------
+1. Open Visual Studio
+2. File → New → Project
+3. Select "Blank Solution"
+4. Name: "CapstoneSystem"
+5. Location: Your workspace directory
+
+
+STEP 2: CREATE HARDWAREIO DLL PROJECT
+--------------------------------------
+1. Right-click Solution → Add → New Project
+2. Select "Dynamic-Link Library (DLL)"
+3. Name: "HardwareIO"
+4. Add existing files:
+   - HardwareIO/HardwareIO.h
+   - HardwareIO/HardwareIO.cpp
+
+5. Configure project properties:
+   Right-click "HardwareIO" project → Properties:
+   - Configuration: All Configurations
+   - C/C++ → Preprocessor → Preprocessor Definitions
+     Add: HARDWAREIO_EXPORTS
+
+
+STEP 3: CREATE LLVACCONTROLLER PROJECT
+---------------------------------------
+1. Right-click Solution → Add → New Project
+2. Select "Console App"
+3. Name: "LLVacController"
+4. Add existing files from LLVacController/:
+   - Logger.h, Logger.cpp
+   - RecipeParser.h, RecipeParser.cpp
+   - LoadLock.h, LoadLock.cpp
+   - LLVacController.cpp
+
+5. Configure project properties:
+   Right-click "LLVacController" → Properties:
+   - Configuration: All Configurations
+   - Linker → Input → Additional Dependencies
+     Add: ws2_32.lib
+
+
+STEP 4: CREATE ATMCONTROLLER PROJECT
+-------------------------------------
+1. Right-click Solution → Add → New Project
+2. Select "Console App"
+3. Name: "ATMController"
+4. Add existing files from ATMController/:
+   - Logger.h, Logger.cpp
+   - Arm.h, Arm.cpp
+   - Scheduler.h, Scheduler.cpp
+   - ATMController.cpp
+
+5. Configure project properties:
+   Right-click "ATMController" → Properties:
+   - Configuration: All Configurations
+   - Linker → Input → Additional Dependencies
+     Add: ws2_32.lib
+
+
+STEP 5: SET BUILD ORDER AND DEPENDENCIES
+-----------------------------------------
+1. Right-click Solution → Project Dependencies
+2. Select "LLVacController" → Check "HardwareIO"
+3. This ensures DLL builds before the exe
+
+
+STEP 6: BUILD THE SOLUTION
+---------------------------
+1. Set Solution Configuration to "Debug" and Platform to "x64"
+2. Build → Build Solution (Ctrl+Shift+B)
+3. Verify no errors
+
+Build output will be in:
+  x64\Debug\HardwareIO.dll
+  x64\Debug\LLVacController.exe
+  x64\Debug\ATMController.exe
+
+
+STEP 7: SETUP RUNTIME ENVIRONMENT
+----------------------------------
+1. Create C:\Capstone\recipes\ folder
+2. Copy recipe1.lcp and recipe2.lcp to C:\Capstone\recipes\
+3. Copy HardwareIO.dll to same directory as LLVacController.exe
+   (or keep them in x64\Debug\ together)
+
+
+STEP 8: RUN THE SYSTEM
+-----------------------
+Option A: Using Batch File
+   1. Copy run_system.bat to x64\Debug\ folder
+   2. Double-click run_system.bat
+
+Option B: Manual
+   1. Open Command Prompt
+   2. Navigate to x64\Debug\
+   3. Run: LLVacController.exe
+   4. Open another Command Prompt
+   5. Run: ATMController.exe 10
+      (where 10 is the number of wafers to process)
+
+
+EXPECTED BEHAVIOR
+-----------------
+- LLVacController starts TCP server on port 54321
+- ATMController connects as client
+- 3 robot arms generate wafers randomly
+- Scheduler coordinates LoadLock access (one arm at a time)
+- Recipes execute with N2/DIW purges
+- Vacuum robot picks processed wafers
+- Logs generated in C:\Capstone\logs\
+
+
+LOG FILES
+---------
+AtmRobot_mmddyy_1.log      - Atmospheric robot activities
+LoadlockProcess_mmddyy_1.log - LoadLock and recipe execution
+VacuumRobot_mmddyy_1.log   - Vacuum robot activities
+
+Files rollover at 128KB to _2.log
+
+
+TROUBLESHOOTING
+---------------
+Issue: "Failed to load HardwareIO.dll"
+Solution: Ensure HardwareIO.dll is in same folder as LLVacController.exe
+
+Issue: "Cannot connect to server"
+Solution: Start LLVacController.exe before ATMController.exe
+
+Issue: "Recipe file not found"
+Solution: Ensure recipes exist in C:\Capstone\recipes\
+
+Issue: Access denied on C:\Capstone
+Solution: Run Visual Studio as Administrator or change log path
+
+
+COMMAND LINE ARGUMENTS
+-----------------------
+ATMController.exe [number_of_wafers]
+Example: ATMController.exe 15
+Default: 10 wafers if no argument provided
+
+
+PROJECT REQUIREMENTS CHECKLIST
+-------------------------------
+✓ Two processes (ATMController, LLVacController)
+✓ IPC via TCP sockets (not shared memory)
+✓ Thread-safe IO operations (mutexes in HardwareIO)
+✓ Concurrency (3 arm threads, scheduler thread, vacuum thread)
+✓ LoadLock collision prevention (scheduler with mutex/CV)
+✓ Recipe parsing from .lcp files
+✓ Dynamic DLL loading (LoadLibrary/GetProcAddress)
+✓ Logging with 128KB rollover
+✓ Debug/Release build configurations
+✓ Enum-based DIO mappings
+
+
+DESIGN PATTERNS USED
+--------------------
+- Producer-Consumer: Arms produce wafers, scheduler consumes
+- State Machine: LoadLock availability states
+- Singleton: Global LoadLock instance
+- Thread Pool: Multiple arm threads
+- Dynamic Loading: DLL runtime linking
+
+
+TESTING
+-------
+Test with different wafer counts:
+  ATMController.exe 5   - Quick test
+  ATMController.exe 20  - Moderate load
+  ATMController.exe 50  - Heavy load
+
+Verify:
+1. No two arms access LoadLock simultaneously
+2. Recipes execute correctly
+3. Vacuum robot picks wafers after processing
+4. Logs are properly formatted and rotated
+5. All wafers are processed before exit
+
+
+PRESENTATION TIPS
+-----------------
+1. Start with architecture diagram
+2. Demonstrate IPC communication
+3. Show concurrent arm operations
+4. Highlight collision prevention in scheduler
+5. Display log files
+6. Explain DLL dynamic loading
+7. Show recipe parsing
+8. Discuss thread safety mechanisms

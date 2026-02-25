@@ -1,0 +1,10 @@
+Recipe Name: DIW Purge Recipe
+Recipe Description: Water Purge
+Step Description: Quick DIW
+N2 Purge: No
+DIW Purge: Yes
+Time(seconds): 1
+Step Description: Deep Clean
+N2 Purge: Yes
+DIW Purge: No
+Time(seconds): 3

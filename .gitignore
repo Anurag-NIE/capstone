@@ -1,0 +1,35 @@
+# Visual Studio / MSBuild
+.vs/
+*.user
+*.suo
+*.VC.db
+*.VC.VC.opendb
+
+# Build outputs
+Debug/
+Release/
+Bin/
+Obj/
+x64/Debug/*
+!x64/Debug/
+!x64/Debug/run_capstone.bat
+x64/Release/
+
+# C/C++ intermediate and binaries
+*.obj
+*.ilk
+*.pdb
+*.idb
+*.ipch
+*.tlog
+*.log
+*.pch
+*.exe
+*.dll
+*.lib
+*.exp
+*.iobj
+*.ipdb
+
+# Other generated files
+*.pid

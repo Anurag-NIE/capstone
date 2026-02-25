@@ -1,0 +1,10 @@
+Recipe Name: Default N2
+Recipe Description: Basic Purge
+Step Description: Initial Purge
+N2 Purge: Yes
+DIW Purge: No
+Time(seconds): 2
+Step Description: Deep Clean
+N2 Purge: Yes
+DIW Purge: No
+Time(seconds): 3
