@@ -2,7 +2,9 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 # Generate a Word-openable document (RTF) containing all repository code + brief guidelines.
-# Output: Capstone_Code_Documentation.rtf in repo root.
+# Outputs (repo root):
+# - Capstone_Code_Documentation.rtf
+# - Capstone_Code_Documentation.doc (RTF content with .doc extension for easy sharing)
 
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 Set-Location $repoRoot
@@ -48,7 +50,8 @@ $files = $files |
     Where-Object { $includeExt -contains [IO.Path]::GetExtension($_).ToLowerInvariant() } |
     Sort-Object
 
-$outPath = Join-Path $repoRoot 'Capstone_Code_Documentation.rtf'
+$outRtfPath = Join-Path $repoRoot 'Capstone_Code_Documentation.rtf'
+$outDocPath = Join-Path $repoRoot 'Capstone_Code_Documentation.doc'
 
 $nl = "`r`n"
 $rtf = New-Object System.Text.StringBuilder
@@ -102,7 +105,10 @@ foreach ($file in $files) {
 
 [void]$rtf.Append('}')
 
-# Write as ASCII-compatible RTF (UTF8 is generally fine too, but ASCII avoids older Word issues)
-[IO.File]::WriteAllText($outPath, $rtf.ToString(), [Text.Encoding]::UTF8)
+# Write RTF (Word-openable). Also write a .doc copy for easy sharing.
+$rtfText = $rtf.ToString()
+[IO.File]::WriteAllText($outRtfPath, $rtfText, [Text.Encoding]::UTF8)
+[IO.File]::WriteAllText($outDocPath, $rtfText, [Text.Encoding]::UTF8)
 
-Write-Host "Generated: $outPath"
+Write-Host "Generated: $outRtfPath"
+Write-Host "Generated: $outDocPath"

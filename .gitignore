@@ -33,3 +33,7 @@ x64/Release/
 
 # Other generated files
 *.pid
+
+# Generated documentation
+Capstone_Code_Documentation.rtf
+Capstone_Code_Documentation.doc
